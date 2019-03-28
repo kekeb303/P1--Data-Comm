@@ -35,39 +35,30 @@ def CreateServerSocket(port):
   Returns:
     An socket that implements TCP/IP.
   """
+  sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+  addr = ('localhost', port)
+  sock.bind(addr)
+  sock.listen(10)
+  return sock
 
-    #############################################
-    #TODO: Implement CreateServerSocket Function
-    #############################################
-
-def ConnectClientToServer(server_sock):
+def ConnectClientToServer(s_sock):
     # Wait until a client connects and then get a socket that connects to the
     # client.
-    
-
-    #############################################
-    #TODO: Implement CreateClientSocket Function
-    #############################################
-    
-
-
+  return s_sock.accept()
 
 def CreateClientSocket(server_addr, port):
   """Creates a socket that connects to a port on a server."""
+  c_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+  c_sock.connect((server_addr, port))
+  return c_sock
 
-    #############################################
-    #TODO: Implement CreateClientSocket Function
-    #############################################
-  
 
 def ReadCommand(sock):
   """Read a single command from a socket. The command must end in newline."""
-
-    #############################################
-    #TODO: Implement ReadCommand Function
-    #############################################
-  
-
+  command = ''
+  while not command or command[-1] != '\n':
+      command = sock.recv(COMMAND_BUFFER_SIZE)
+  return command.strip()
 
 def ParseCommand(command):
   """Parses a command and returns the command name, first arg, and remainder.
@@ -104,11 +95,7 @@ class KeyValueStore(object):
   """
 
   def __init__(self):
-
-    ###########################################
-    #TODO: Implement __init__ Function
-    ###########################################
-    
+    self.store = dict()
 
   def GetValue(self, key, max_age_in_sec=None):
     """Gets a cached value or `None`.
@@ -123,11 +110,10 @@ class KeyValueStore(object):
       None or the value.
     """
     # Check if we've ever put something in the cache.
-
-    ###########################################
-    #TODO: Implement GetValue Function
-    ###########################################
-
+    if key in self.store.keys():
+      return self.store[key]
+    else:
+      return None
 
 
   def StoreValue(self, key, value):
@@ -137,25 +123,9 @@ class KeyValueStore(object):
       key: string. The name of the value to store.
       value: string. A value to store.
     """
+    self.store[key] = value
 
-    ###########################################
-    #TODO: Implement StoreValue Function
-    ###########################################
-
-    
 
   def Keys(self):
     """Returns a list of all keys in the datastore."""
-
-    ###########################################
-    #TODO: Implement Keys Function
-    ###########################################
-    
-
-
-
-
-
-
-
-
+    return list(self.store.keys())

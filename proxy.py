@@ -41,26 +41,28 @@ def ForwardCommandToServer(command, server_addr, server_port):
     A single line string response with no newlines.
   """
 
-  ###################################################
-  #TODO: Implement Function: WiP
-  ###################################################
-
-
+  c_sock = library.CreateClientSocket(server_addr, server_port)
+  c_sock.send(command + '\n')
+  response = library.ReadCommand(c_sock)
+  c_sock.close()
+  return response + '\n'
 
 def CheckCachedResponse(command_line, cache):
   cmd, name, text = library.ParseCommand(command_line)
 
   # Update the cache for PUT commands but also pass the traffic to the server.
-  ##########################
-  #TODO: Implement section
-  ##########################
+  if cmd == "PUT":
+     cache.StoreValue(name, text)
+     ForwardCommandToServer(command_line, SERVER_ADDRESS, SERVER_PORT)
+     return None
 
-  # GET commands can be cached.
-
-  ############################
-  #TODO: Implement section
-  ############################
-  
+  if cmd == "GET":
+      #send to server
+      if name in cache:
+          return cache[name]
+      else:
+          #use forward command to server and store command in cache
+          ForwardCommandToServer(command_line, SERVER_ADDRESS, SERVER_PORT)
 
 
 def ProxyClientCommand(sock, server_addr, server_port, cache):
@@ -79,29 +81,35 @@ def ProxyClientCommand(sock, server_addr, server_port, cache):
       the server.
   """
 
-  ###########################################
-  #TODO: Implement ProxyClientCommand
-  ###########################################
+  # Read the command line and parse it.
+  command_line = library.ReadCommand(sock)
+  command, name, value = library.ParseCommand(command_line)
 
+  # Determine the type of command.
+  if command == 'PUT':
+    response = ForwardCommandToServer(command_line, SERVER_ADDRESS, SERVER_PORT)
+    cache.StoreValue(name, response)
+  elif (command == 'GET'):
+    response = cache.GetValue(name)
+    if response == None:
+      response = ForwardCommandToServer(command_line, SERVER_ADDRESS, SERVER_PORT)
+  else:
+    response = ForwardCommandToServer(command_line, SERVER_ADDRESS, SERVER_PORT)
 
-
+  sock.send(response)
 
 def main():
   # Listen on a specified port...
-  server_sock = library.CreateServerSocket(LISTENING_PORT)
+  s_sock = library.CreateServerSocket(LISTENING_PORT)
   cache = library.KeyValueStore()
   # Accept incoming commands indefinitely.
   while True:
     # Wait until a client connects and then get a socket that connects to the
     # client.
-    client_sock, (address, port) = library.ConnectClientToServer(server_sock)
+    c_sock, (address, port) = library.ConnectClientToServer(s_sock)
     print('Received connection from %s:%d' % (address, port))
-    ProxyClientCommand(client_sock, SERVER_ADDRESS, SERVER_PORT,
+    ProxyClientCommand(c_sock, SERVER_ADDRESS, SERVER_PORT,
                        cache)
-
-  #################################
-  #TODO: Close socket's connection
-  #################################
-
+    c_sock.close()
 
 main()
